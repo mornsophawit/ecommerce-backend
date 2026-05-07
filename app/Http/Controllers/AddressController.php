@@ -64,4 +64,10 @@ class AddressController extends Controller
 
         return response()->json(['message' => 'Address deleted successfully']);
     }
+
+    public function getByUserId($userId)
+    {
+        $addresses = Address::where('user_id', $userId)->get();
+        return response()->json($addresses);
+    }
 }
