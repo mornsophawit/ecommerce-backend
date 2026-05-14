@@ -20,6 +20,7 @@ Route::get('/product-types/{id}',  [ProductTypeController::class, 'show']);
 Route::get('/products', [ProductController::class, 'index']);
 Route::get('/products/{id}', [ProductController::class, 'show']);
 Route::get('/products/by-type/{product_type_id}', [ProductController::class, 'getByType']);
+Route::post('/products/query', [ProductController::class, 'query']);
 
 Route::middleware(['auth:api'])->group(function () {
     Route::get('/me',        [AuthController::class, 'me']);
@@ -28,6 +29,7 @@ Route::middleware(['auth:api'])->group(function () {
 
     Route::post('/addresses', [AddressController::class, 'store']);
     Route::get('/addresses/{id}', [AddressController::class, 'show']);
+    Route::get('/addresses/{userId}', [AddressController::class, 'getByUserId']);
     Route::put('/addresses/{id}', [AddressController::class, 'update']);
     Route::delete('/addresses/{id}', [AddressController::class, 'destroy']);
 

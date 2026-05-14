@@ -17,6 +17,8 @@ return new class extends Migration
             $table->decimal('total_amount', 10, 2);
             $table->enum('status', ['Pending', 'Processing', 'Shipped', 'Delivered'])->default('Pending');
             $table->string('receipt_number')->unique();
+            $table->foreignId('status_id')->nullable()->constrained('statuses');
+            $table->date('date')->useCurrent();
             $table->timestamps();
         });
     }

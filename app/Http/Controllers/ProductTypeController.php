@@ -25,9 +25,22 @@ class ProductTypeController extends Controller
     {
         $request->validate([
             'name' => 'required|string|unique:product_types',
-            'img_url' => 'nullable|string',
+            'img_url' => 'required_without:image|string|url',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
-        $type = ProductType::create($request->only(['name', 'img_url']));
+
+        $img_url = null;
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('product_types', 'public');
+            $img_url = asset('storage/' . $path);
+        } else {
+            $img_url = $request->img_url;
+        }
+
+        $type = ProductType::create([
+            'name' => $request->name,
+            'img_url' => $img_url,
+        ]);
         return response()->json($type, 201);
     }
 
@@ -39,9 +52,19 @@ class ProductTypeController extends Controller
         }
         $request->validate([
             'name' => 'required|string|unique:product_types,name,' . $id,
-            'img_url' => 'nullable|string',
+            'img_url' => 'nullable|string|url',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
-        $type->update($request->only(['name', 'img_url']));
+
+        $data = $request->only(['name']);
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('product_types', 'public');
+            $data['img_url'] = asset('storage/' . $path);
+        } elseif ($request->has('img_url')) {
+            $data['img_url'] = $request->img_url;
+        }
+
+        $type->update($data);
         return response()->json($type);
     }
 

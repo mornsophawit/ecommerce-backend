@@ -17,6 +17,8 @@ return new class extends Migration
             $table->string('method');
             $table->string('status')->default('Pending');
             $table->string('transaction_id')->nullable();
+            $table->foreignId('status_id')->nullable()->constrained('statuses');
+            $table->foreignId('created_by')->constrained('users');
             $table->timestamps();
         });
     }
