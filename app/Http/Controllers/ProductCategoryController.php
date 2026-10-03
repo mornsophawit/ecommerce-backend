@@ -3,78 +3,182 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\ProductCategoryResource;
 use Illuminate\Http\Request;
 use App\Models\ProductCategory;
+use App\Models\User;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class ProductCategoryController extends Controller
 {
-    public function index()
+    /**
+     * Display a listing of product categories with search and pagination.
+     */
+    public function index(Request $request): JsonResponse
     {
-        return response()->json(ProductCategory::all());
-    }
+        $query = ProductCategory::query();
 
-    public function show($id)
-    {
-        $category = ProductCategory::find($id);
-        if (!$category) {
-            return response()->json(['error' => 'Not Found'], 404);
+        // 1. Filter by root components only (Optional query parameter flag)
+        if ($request->boolean('root_only')) {
+            $query->whereNull('parent_id');
         }
-        return response()->json($category);
+
+        // 2. Global Multi-Language Search (name, name_kh, slug, or descriptions)
+        if ($request->has('search')) {
+            $search = $request->input('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'LIKE', "%{$search}%")
+                  ->orWhere('name_kh', 'LIKE', "%{$search}%")
+                  ->orWhere('slug', 'LIKE', "%{$search}%");
+            });
+        }
+
+        // Default sorting sequence based on your schema profile
+        $query->orderBy('display_order', 'asc');
+
+        // 3. Dynamic Server Side Pagination
+        $perPage = $request->input('per_page', 10);
+        $paginatedCategories = $query->with(['parent', 'creator', 'updater'])->paginate($perPage);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Product categories retrieved successfully.',
+            'data' => ProductCategoryResource::collection($paginatedCategories->items()),
+            'pagination' => [
+                'current_page' => $paginatedCategories->currentPage(),
+                'last_page' => $paginatedCategories->lastPage(),
+                'per_page' => $paginatedCategories->perPage(),
+                'total' => $paginatedCategories->total(),
+            ]
+        ], 200);
     }
 
-    public function store(Request $request)
+    /**
+     * Store a newly created category.
+     */
+    public function store(Request $request): JsonResponse
     {
-        $request->validate([
-            'title' => 'required|string',
-            'slug' => 'required|string|unique:product_categories',
-            'description' => 'nullable|string',
-            'image_url' => 'nullable|string|url',
-            'icon' => 'nullable|string',
-            'is_active' => 'boolean',
-            'display_order' => 'integer',
+        /** @var User $user */
+        $user = auth()->user();
+
+        // Security Guard: Check administrative operational rights
+        if (!$user->isSuperAdmin() && !$user->isStoreAdmin()) {
+            return response()->json(['success' => false, 'message' => 'Action Unauthorized.'], 403);
+        }
+
+        $validator = Validator::make($request->all(), [
             'parent_id' => 'nullable|exists:product_categories,id',
+            'name' => 'required|string|max:255',
+            'name_kh' => 'required|string|max:255',
+            'slug' => 'nullable|string|max:255|unique:product_categories,slug',
+            'description' => 'nullable|string',
+            'description_kh' => 'nullable|string',
+            'image_url' => 'nullable|string|max:255',
+            'icon' => 'nullable|string|max:255',
+            'is_active' => 'nullable|boolean',
+            'display_order' => 'nullable|integer',
         ]);
 
-        $data = $request->only(['title', 'slug', 'description', 'image_url', 'icon', 'is_active', 'display_order', 'parent_id']);
-        $data['created_by'] = auth()->id();
-        $data['updated_by'] = auth()->id();
-
-        $category = ProductCategory::create($data);
-        return response()->json($category, 201);
-    }
-
-    public function update(Request $request, $id)
-    {
-        $category = ProductCategory::find($id);
-        if (!$category) {
-            return response()->json(['error' => 'Not Found'], 404);
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'message' => 'Validation error.', 'errors' => $validator->errors()], 422);
         }
 
-        $request->validate([
-            'title' => 'required|string',
-            'slug' => 'required|string|unique:product_categories,slug,' . $id,
-            'description' => 'nullable|string',
-            'image_url' => 'nullable|string|url',
-            'icon' => 'nullable|string',
-            'is_active' => 'boolean',
-            'display_order' => 'integer',
+        $validated = $validator->validated();
+        $validated['created_by'] = $user->id;
+        $validated['updated_by'] = $user->id;
+        
+        // Auto convert string names to slugs if explicitly omitted from payload
+        if (empty($validated['slug'])) {
+            $validated['slug'] = Str::slug($validated['name']);
+        }
+
+        $category = ProductCategory::create($validated);
+        $category->load(['parent', 'creator', 'updater']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Product category created successfully.',
+            'data' => new ProductCategoryResource($category)
+        ], 201);
+    }
+
+    /**
+     * Display the specified category.
+     */
+    public function show(ProductCategory $productCategory): JsonResponse
+    {
+        $productCategory->load(['parent', 'creator', 'updater']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Product category details retrieved successfully.',
+            'data' => new ProductCategoryResource($productCategory)
+        ], 200);
+    }
+
+    /**
+     * Update the specified category.
+     */
+    public function update(Request $request, ProductCategory $productCategory): JsonResponse
+    {
+        /** @var User $user */
+        $user = auth()->user();
+
+        if (!$user->isSuperAdmin() && !$user->isStoreAdmin()) {
+            return response()->json(['success' => false, 'message' => 'Action Unauthorized.'], 403);
+        }
+
+        $validator = Validator::make($request->all(), [
             'parent_id' => 'nullable|exists:product_categories,id',
+            'name' => 'sometimes|required|string|max:255',
+            'name_kh' => 'sometimes|required|string|max:255',
+            'slug' => 'sometimes|required|string|max:255|unique:product_categories,slug,' . $productCategory->id,
+            'description' => 'nullable|string',
+            'description_kh' => 'nullable|string',
+            'image_url' => 'nullable|string|max:255',
+            'icon' => 'nullable|string|max:255',
+            'is_active' => 'nullable|boolean',
+            'display_order' => 'nullable|integer',
         ]);
 
-        $data = $request->only(['title', 'slug', 'description', 'image_url', 'icon', 'is_active', 'display_order', 'parent_id']);
-        $data['updated_by'] = auth()->id();
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'message' => 'Validation error.', 'errors' => $validator->errors()], 422);
+        }
 
-        $category->update($data);
-        return response()->json($category);
+        $validated = $validator->validated();
+        $validated['updated_by'] = $user->id;
+
+        $productCategory->update($validated);
+        $productCategory->load(['parent', 'creator', 'updater']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Product category updated successfully.',
+            'data' => new ProductCategoryResource($productCategory)
+        ], 200);
     }
 
-    public function destroy($id)
+    /**
+     * Remove the specified category from storage.
+     */
+    public function destroy(ProductCategory $productCategory): JsonResponse
     {
-        $category = ProductCategory::find($id);
-        if (!$category) {
-            return response()->json(['error' => 'Not Found'], 404);
+        /** @var User $user */
+        $user = auth()->user();
+
+        if (!$user->isSuperAdmin()) {
+            return response()->json(['success' => false, 'message' => 'Only Super Admins can erase category nodes.'], 403);
         }
-        $category->delete();
-        return response()->json(['message' => 'Deleted']);
+
+        // Note: Due to onDelete('cascade'), deleting a parent category will clear out its children.
+        $productCategory->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Product category and its subcategories removed successfully.',
+            'data' => null
+        ], 200);
     }
 }

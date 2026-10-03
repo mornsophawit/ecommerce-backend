@@ -13,14 +13,23 @@ return new class extends Migration
     {
         Schema::create('order_details', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('product_id')->constrained()->onDelete('cascade');
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            // $table->foreignId('product_id')->constrained()->onDelete('cascade');
+            // $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->foreignId('order_id')->nullable()->constrained()->onDelete('cascade');
+            $table->foreignId('product_id')->nullable()->constrained('products')->onDelete('cascade');
+            $table->foreignId('product_option_id')->nullable()->constrained('product_options')->onDelete('cascade');
             $table->integer('quantity');
             $table->decimal('price', 10, 2);
-            $table->unique(['order_id', 'product_id'], 'unique_order_product');
             $table->timestamps();
         });
+
+        // Schema::create('order_detail_product_option', function (Blueprint $table) {
+        //     $table->id();
+        //     $table->foreignId('order_detail_id')->constrained('order_details')->onDelete('cascade');
+        //     $table->foreignId('product_option_id')->constrained('product_options')->onDelete('cascade');
+        //     $table->unique(['order_detail_id', 'product_option_id'], 'od_po_unique');
+        //     $table->timestamps();
+        // });
     }
 
     /**
@@ -28,6 +37,7 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::dropIfExists('order_detail_product_option');
         Schema::dropIfExists('order_details');
     }
 };

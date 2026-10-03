@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\Product;
+use App\Models\User;
 
 class ProductSeeder extends Seeder
 {
@@ -13,6 +14,12 @@ class ProductSeeder extends Seeder
      */
     public function run(): void
     {
+        $userIds = User::pluck('id')->all();
+
+        if (empty($userIds)) {
+            return;
+        }
+
         $productsData = [
             1 => [ // Electronics
                 ['name' => 'Laptop', 'description' => 'High-performance laptop for work and gaming.', 'price' => 1200.00, 'stock' => 50, 'img_url' => 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=640&h=480&fit=crop'],
@@ -95,7 +102,7 @@ class ProductSeeder extends Seeder
             foreach ($products as $product) {
                 Product::create([
                     'product_type_id' => $typeId,
-                    'user_id' => rand(1, 5),
+                    'user_id' => $userIds[array_rand($userIds)],
                     'name' => $product['name'],
                     'description' => $product['description'],
                     'price' => $product['price'],

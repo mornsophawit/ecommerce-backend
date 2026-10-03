@@ -6,27 +6,35 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\User;
 use App\Models\CartItem;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Cart extends Model
 {
-    use HasFactory;
-
     protected $fillable = [
-        'user_id',
         'expires_at',
+        'created_by',
+        'updated_by',
     ];
 
     protected $casts = [
         'expires_at' => 'datetime',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
 
-    public function user()
+    public function items(): HasMany
     {
-        return $this->belongsTo(User::class);
+        return $this->hasMany(CartItem::class, 'cart_id');
     }
 
-    public function cartItems()
+    public function creator(): BelongsTo
     {
-        return $this->hasMany(CartItem::class);
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function updater(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'updated_by');
     }
 }

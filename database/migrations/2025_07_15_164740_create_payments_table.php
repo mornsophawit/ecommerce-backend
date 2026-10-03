@@ -14,12 +14,15 @@ return new class extends Migration
         Schema::create('payments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('order_id')->constrained()->onDelete('cascade');
-            $table->string('method');
-            $table->string('status')->default('Pending');
+            // $table->string('status')->default('Pending');
             $table->string('transaction_id')->nullable();
             $table->foreignId('status_id')->nullable()->constrained('statuses');
+            $table->enum('fulfillment_type', ['shipping', 'pickup']);
+            $table->enum('method', ['cash_on_delivery', 'stripe', 'khqr', 'pay_at_counter', 'aba_payway']);
+            $table->timestamp('created_at')->useCurrent();
             $table->foreignId('created_by')->constrained('users');
-            $table->timestamps();
+            $table->timestamp('updated_at')->nullable()->useCurrentOnUpdate();
+            $table->foreignId('updated_by')->constrained('users');
         });
     }
 

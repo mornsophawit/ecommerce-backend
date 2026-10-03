@@ -13,21 +13,20 @@ return new class extends Migration
     {
         Schema::create('product_categories', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('parent_id')->nullable();
-            $table->string('title');
+            $table->foreignId('parent_id')->nullable()->constrained('product_categories')->onDelete('cascade');
+            $table->string('name');
+            $table->string('name_kh');
             $table->string('slug')->unique();
             $table->text('description')->nullable();
+            $table->text('description_kh')->nullable();
             $table->string('image_url')->nullable();
             $table->string('icon')->nullable();
             $table->boolean('is_active')->default(true);
             $table->integer('display_order')->default(0);
-            $table->timestamps();
-            $table->unsignedBigInteger('created_by')->nullable();
-            $table->unsignedBigInteger('updated_by')->nullable();
-
-            $table->foreign('parent_id')->references('id')->on('product_categories')->onDelete('cascade');
-            $table->foreign('created_by')->references('id')->on('users')->onDelete('set null');
-            $table->foreign('updated_by')->references('id')->on('users')->onDelete('set null');
+            $table->timestamp('created_at')->useCurrent();
+            $table->foreignId('created_by')->constrained('users');
+            $table->timestamp('updated_at')->nullable()->useCurrentOnUpdate();
+            $table->foreignId('updated_by')->constrained('users');
         });
     }
 

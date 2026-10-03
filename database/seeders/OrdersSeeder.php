@@ -15,8 +15,10 @@ class OrdersSeeder extends Seeder
         DB::table('orders')->insert([
             [
                 'user_id' => 1,
-                'status_id' => 1, // Pending
+                'status_id' => 1,
+                'address_id' => 1,
                 'total_amount' => 100.00,
+                'receipt_number' => 'RCP-' . strtoupper(uniqid()),
                 'date' => now(),
             ],
             // Add more as needed

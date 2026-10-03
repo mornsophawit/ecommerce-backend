@@ -3,6 +3,8 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use App\Models\Cart;
+use App\Models\User;
 
 class CartsSeeder extends Seeder
 {
@@ -11,6 +13,13 @@ class CartsSeeder extends Seeder
      */
     public function run(): void
     {
-        // No seeding needed for carts
+        $users = User::all();
+
+        foreach ($users as $user) {
+            Cart::create([
+                'user_id' => $user->id,
+                'expires_at' => now()->addDays(30),
+            ]);
+        }
     }
 }

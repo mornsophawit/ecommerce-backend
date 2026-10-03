@@ -13,9 +13,14 @@ return new class extends Migration
     {
         Schema::create('statuses', function (Blueprint $table) {
             $table->id();
+            $table->string('type');
+            $table->string('value');
             $table->string('name')->unique();
-            $table->foreignId('created_by')->constrained('users');
-            $table->foreignId('updated_by')->constrained('users');
+            $table->string('name_kh');
+            $table->timestamp('created_at')->useCurrent();
+            $table->foreignId('created_by')->nullable()->constrained('users')->onDelete('set null');
+            $table->timestamp('updated_at')->nullable()->useCurrent()->useCurrentOnUpdate();
+            $table->foreignId('updated_by')->nullable()->constrained('users')->onDelete('set null');
         });
     }
 

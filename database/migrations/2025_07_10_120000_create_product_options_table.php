@@ -14,10 +14,13 @@ return new class extends Migration
         Schema::create('product_options', function (Blueprint $table) {
             $table->id();
             $table->foreignId('product_id')->constrained('products')->onDelete('cascade');
-            $table->foreignId('user_id')->nullable()->constrained('users');
+            // $table->foreignId('user_id')->nullable()->constrained('users');
             $table->string('option_type');
+            $table->string('option_type_kh');
             $table->string('option_name');
-            $table->float('price');
+            $table->string('option_name_kh');
+            $table->float('price', 10, 2);
+            $table->enum('pricing_type', ['override', 'addon'])->default('addon');
             $table->string('image_url')->nullable();
             $table->timestamp('created_at')->useCurrent();
             $table->foreignId('created_by')->constrained('users');

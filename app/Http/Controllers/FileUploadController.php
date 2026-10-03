@@ -10,7 +10,7 @@ class FileUploadController extends Controller
     public function __construct()
     {
         $this->middleware('auth:api');
-        $this->middleware('role:admin,vendor');
+        $this->middleware('role:super_admin,store_admin,customer,cahier');
     }
 
     public function upload(Request $request)
