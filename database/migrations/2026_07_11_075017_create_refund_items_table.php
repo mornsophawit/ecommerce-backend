@@ -11,13 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('addresses', function (Blueprint $table) {
+        Schema::create('refund_items', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->text('address');
-            $table->string('contact');
-            $table->string('full_name')->nullable();
-            $table->string('email')->nullable();
+            $table->foreignId('refund_id')->nullable()->constrained('refunds')->onDelete('cascade');
+            $table->foreignId('order_detail_id')->nullable()->constrained('order_details')->onDelete('cascade');
+            $table->integer('quantity');
+            $table->float('subtotal', 10, 2);
             $table->timestamps();
         });
     }
@@ -27,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('addresses');
+        Schema::dropIfExists('refund_items');
     }
 };

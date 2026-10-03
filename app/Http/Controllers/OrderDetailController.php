@@ -5,52 +5,71 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\OrderDetail;
-use App\Models\Product;
+use App\Models\Order;
+use App\Models\User;
+use Illuminate\Http\JsonResponse;
 
 class OrderDetailController extends Controller
 {
-    public function index()
+    /**
+     * Display a listing of items belonging to an order.
+     */
+    public function index(Request $request): JsonResponse
     {
-        $userId = auth()->id();
-        $cartItems = OrderDetail::with('product')
-            ->where('user_id', $userId)
-            ->whereNull('order_id') // not yet ordered
-            ->get();
+        /** @var User $user */
+        $user = auth()->user();
 
-        return response()->json($cartItems);
-    }
-
-    public function store(Request $request)
-    {
-        $request->validate([
-            'product_id' => 'required|exists:products,id',
-            'quantity' => 'required|integer|min:1',
-        ]);
-
-        $product = Product::findOrFail($request->product_id);
-
-        $orderDetail = OrderDetail::create([
-            'product_id' => $product->id,
-            'user_id' => auth()->id(),
-            'quantity' => $request->quantity,
-            'price' => $product->price, // take snapshot of current product price
-            'order_id' => null,         // still in cart
-        ]);
-
-        return response()->json($orderDetail, 201);
-    }
-
-    public function destroy($id)
-    {
-        $cartItem = OrderDetail::where('user_id', auth()->id())
-            ->whereNull('order_id')
-            ->find($id);
-
-        if (!$cartItem) {
-            return response()->json(['error' => 'Cart item not found'], 404);
+        // Enforce an order ID constraint filter
+        if (!$request->has('order_id')) {
+            return response()->json(['success' => false, 'message' => 'The order_id query parameter is required.'], 422);
         }
 
-        $cartItem->delete();
-        return response()->json(['message' => 'Item removed from cart']);
+        $orderId = $request->input('order_id');
+        $order = Order::findOrFail($orderId);
+
+        // Strict Owner Isolation: Customers can only see details of orders they created
+        if ($user->isCustomer() && (int)$order->created_by !== (int)$user->id) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized access to this order record.'], 403);
+        }
+
+        // Managers, Cashiers, and Admins can view any order's details
+        if (!$user->isCustomer() && !$user->isSuperAdmin() && !$user->isStoreAdmin() && !$user->isCashier()) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized role.'], 403);
+        }
+
+        $details = OrderDetail::where('order_id', $orderId)
+            ->with(['product', 'productOption'])
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Order details retrieved successfully.',
+            'data' => $details
+        ], 200);
     }
+
+    /**
+     * Display a specific line item.
+     */
+    public function show($id): JsonResponse
+    {
+        /** @var User $user */
+        $user = auth()->user();
+
+        $detail = OrderDetail::with(['product', 'productOption', 'order'])->findOrFail($id);
+
+        // Check ownership if user is a customer
+        if ($user->isCustomer() && (int)$detail->order->created_by !== (int)$user->id) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized access to this record.'], 403);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Line item retrieved successfully.',
+            'data' => $detail
+        ], 200);
+    }
+    
+    // Note: 'store', 'update', and 'destroy' methods are removed because modifications 
+    // to order snapshots should be locked down to preserve billing audit integrity.
 }
