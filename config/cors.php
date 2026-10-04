@@ -19,7 +19,12 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:3001', '*'],
+    // NOTE: '*' cannot be combined with supports_credentials = true (browsers reject it).
+    // List allowed frontend origins explicitly via the CORS_ALLOWED_ORIGINS env var instead.
+    'allowed_origins' => array_filter(array_map('trim', explode(
+        ',',
+        env('CORS_ALLOWED_ORIGINS', 'http://localhost:5173,http://localhost:3000,http://localhost:3001')
+    ))),
 
     'allowed_origins_patterns' => [],
 
