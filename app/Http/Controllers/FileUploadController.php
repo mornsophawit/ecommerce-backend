@@ -21,8 +21,11 @@ class FileUploadController extends Controller
 
         try {
             $file = $request->file('file');
-            $path = $file->store('public/images');
-            $url = Storage::url($path);
+            // Store explicitly on the "public" disk (storage/app/public) so Flysystem
+            // creates the directory/file with public-readable permissions, not the
+            // private (owner-only) defaults used by the generic "local" disk.
+            $path = $file->store('images', 'public');
+            $url = Storage::disk('public')->url($path);
 
             return response()->json(['url' => $url], 200);
         } catch (\Exception $e) {
