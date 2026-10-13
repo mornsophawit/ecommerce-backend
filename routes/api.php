@@ -88,6 +88,7 @@ Route::middleware(['api', 'auth:api', 'active'])->group(function () {
     // Unified Shopping Cart Engine (Manages lines internally)
     Route::get('/cart',                 [CartController::class, 'viewCart']);
     Route::post('/cart/add',            [CartController::class, 'addItem']);
+    Route::put('/cart/item/{itemId}',   [CartController::class, 'updateItemQuantity']);
     Route::delete('/cart/item/{itemId}', [CartController::class, 'removeItem']);
     Route::delete('/cart/clear',         [CartController::class, 'clearCart']);
 
