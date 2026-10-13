@@ -204,190 +204,6 @@ class CartController extends Controller
             ], 500);
         }
     }
-
-    // public function addItem(Request $request): JsonResponse
-    // {
-    //     $user = auth()->user();
-    //     $validator = Validator::make($request->all(), [
-    //         'branch_id' => 'required|exists:branches,id',
-    //         'product_id' => 'required|exists:products,id',
-    //         'product_option_id' => 'nullable|exists:product_options,id',
-    //         'quantity' => 'required|integer|min:1',
-    //     ]);
-
-    //     if ($validator->fails()) {
-    //         return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
-    //     }
-
-    //     return DB::transaction(function () use ($request, $user) {
-    //         $cart = Cart::firstOrCreate(
-    //             ['created_by' => $user->id],
-    //             ['updated_by' => $user->id, 'expires_at' => now()->addDays(7)]
-    //         );
-
-    //         // STAGE 1: Check branch stock limits via the relation pivot
-    //         $product = Product::findOrFail($request->product_id);
-    //         $branchPivot = $product->branches()->where('branch_id', $request->branch_id)->first();
-
-    //         if (!$branchPivot) {
-    //             return response()->json([
-    //                 'success' => false, 
-    //                 'message' => 'This product is not available at the selected branch location.'
-    //             ], 422);
-    //         }
-
-    //         // STAGE 2: Handle mixed-branch validation
-    //         $firstItem = $cart->items()->first();
-    //         if ($firstItem && (int)$firstItem->branch_id !== (int)$request->branch_id) {
-    //             return response()->json([
-    //                 'success' => false,
-    //                 'message' => 'Your cart contains items from another branch location. Clear cart first.'
-    //             ], 400);
-    //         }
-
-    //         // Calculate total target quantity including items already present in the cart
-    //         $query = CartItem::where('cart_id', $cart->id)
-    //             ->where('branch_id', $request->branch_id)
-    //             ->where('product_id', $request->product_id);
-
-    //         if ($request->filled('product_option_id')) {
-    //             $query->where('product_option_id', $request->product_option_id);
-    //         } else {
-    //             $query->whereNull('product_option_id');
-    //         }
-
-    //         $cartItem = $query->first();
-
-    //         $currentCartQty = $cartItem ? $cartItem->quantity : 0;
-    //         $totalTargetQty = $currentCartQty + $request->quantity;
-
-    //         if ($branchPivot->pivot->stock < $totalTargetQty) {
-    //             return response()->json([
-    //                 'success' => false,
-    //                 'message' => "Insufficient stock. Only {$branchPivot->pivot->stock} items available at this branch."
-    //             ], 422);
-    //         }
-
-    //         // STAGE 3: Determine base pricing rule
-    //         $basePrice = $branchPivot->pivot->price ?? $product->price;
-
-    //         if ($request->filled('product_option_id')) {
-    //             $option = ProductOption::where('id', $request->product_option_id)
-    //                 ->where('product_id', $product->id)
-    //                 ->first();
-
-    //             if (!$option) {
-    //                 return response()->json([
-    //                     'success' => false,
-    //                     'message' => "The selected option variant does not exist for the product [{$product->name}]."
-    //                 ], 422);
-    //             }
-
-    //             $unitPrice = (float) $basePrice + (float) $option->price;
-    //         } else {
-    //             $unitPrice = (float) $basePrice;
-    //         }
-
-    //         // STAGE 4: Insert or update
-    //         if ($cartItem) {
-    //             $cartItem->update([
-    //                 'quantity'   => $totalTargetQty,
-    //                 'price'      => $unitPrice,
-    //                 'updated_by' => $user->id,
-    //             ]);
-    //         } else {
-    //             $cartItem = CartItem::create([
-    //                 'cart_id'           => $cart->id,
-    //                 'branch_id'         => $request->branch_id,
-    //                 'product_id'        => $request->product_id,
-    //                 'product_option_id' => $request->input('product_option_id'), // null is OK after migration
-    //                 'quantity'          => $request->quantity,
-    //                 'price'             => $unitPrice,
-    //                 'created_by'        => $user->id,
-    //                 'updated_by'        => $user->id,
-    //             ]);
-    //         }
-
-            // // Calculate total target quantity including items already present in the cart
-            // $cartItem = CartItem::where('cart_id', $cart->id)
-            //     ->where('branch_id', $request->branch_id)
-            //     ->where('product_id', $request->product_id)
-            //     ->where('product_option_id', $request->product_option_id) // Matches single-option column if applicable
-            //     ->first();
-
-            // $currentCartQty = $cartItem ? $cartItem->quantity : 0;
-            // $totalTargetQty = $currentCartQty + $request->quantity;
-
-            // if ($branchPivot->pivot->stock < $totalTargetQty) {
-            //     return response()->json([
-            //         'success' => false,
-            //         'message' => "Insufficient stock. Only {$branchPivot->pivot->stock} items available at this branch."
-            //     ], 422);
-            // }
-
-            // // STAGE 3: Determine base pricing rule
-            // $basePrice = $branchPivot->pivot->price ?? $product->price;
-
-            // if ($request->filled('product_option_id')) {
-            //     // Look for the option ensuring it explicitly belongs to this product id right in the query
-            //     $option = ProductOption::where('id', $request->product_option_id)
-            //                         ->where('product_id', $product->id)
-            //                         ->first();
-
-            //     if (!$option) {
-            //         return response()->json([
-            //             'success' => false, 
-            //             'message' => "The selected option variant does not exist for the product [{$product->name}]."
-            //         ], 422);
-            //     }
-                
-            //     $unitPrice = (float)$basePrice + (float)$option->price;
-            // } else {
-            //     $unitPrice = (float)$basePrice;
-            // }
-
-            // // STAGE 4: Process processing row state entries
-            // if ($cartItem) {
-            //     $cartItem->update([
-            //         'quantity' => $totalTargetQty,
-            //         'price' => $unitPrice,
-            //         'updated_by' => $user->id
-            //     ]);
-            // } else {
-            //     $cartItem = CartItem::create([
-            //         'cart_id'           => $cart->id,
-            //         'branch_id'         => $request->branch_id,
-            //         'product_id'        => $request->product_id,
-            //         'product_option_id' => $request->product_option_id,
-            //         'quantity'          => $request->quantity,
-            //         'price'             => $unitPrice,
-            //         'created_by'        => $user->id,
-            //         'updated_by'        => $user->id,
-            //     ]);
-            // }
-
-            // // Fixed: Safely load relationships matching your single-column architecture
-            // $relations = ['items.product', 'items.branch'];
-            
-            // // Checks if your CartItem model has the productOption relationship method defined
-            // if (method_exists(new \App\Models\CartItem(), 'productOption')) {
-            //     $relations[] = 'items.productOption';
-            // }
-
-            // $cart->load($relations);
-
-            // return response()->json([
-            //     'success' => true,
-            //     'message' => 'Item added to cart successfully.',
-            //     'data' => $cart
-            // ], 200);
-    //     });
-    // }
-
-        /**
-     * Remove an explicit row entry from the shopping cart.
-     * DELETE /api/cart/item/{itemId}
-     */
     /**
      * Remove an explicit single item row from the shopping cart.
      * DELETE /api/cart/item/{itemId}
@@ -438,55 +254,57 @@ class CartController extends Controller
         ], 200);
     }
 
+    /**
+     * Update the quantity of a specific item in the authenticated user's cart.
+     * PUT/PATCH /api/cart/item/{itemId}
+     */
+    public function updateItemQuantity(Request $request, $itemId): JsonResponse
+    {
+        /** @var \App\Models\User $user */
+        $user = auth()->user();
 
-    // public function removeItem($itemId): JsonResponse
-    // {
-    //     /** @var \App\Models\User $user */
-    //     $user = auth()->user();
+        // Validate that quantity is provided and is a safe number
+        $validator = Validator::make($request->all(), [
+            'quantity' => 'required|integer|min:1',
+        ]);
 
-    //     // 1. Explicitly locate the target line item ensuring it maps to the active user's cart
-    //     $cartItem = CartItem::where('id', $itemId)
-    //         ->whereHas('cart', function ($query) use ($user) {
-    //             $query->where('created_by', $user->id);
-    //         })->first();
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false, 
+                'message' => 'Validation error.', 
+                'errors' => $validator->errors()
+            ], 422);
+        }
 
-    //     if (!$cartItem) {
-    //         return response()->json([
-    //             'success' => false,
-    //             'message' => 'Cart item not found or does not belong to your session.'
-    //         ], 444); // Distinct response flag mapping
-    //     }
+        // Find the user's cart item row securely
+        $cartItem = CartItem::where('id', $itemId)
+            ->whereHas('cart', function ($query) use ($user) {
+                $query->where('created_by', $user->id);
+            })->first();
 
-    //     // 2. Erase the database record line entry
-    //     $cartItem->delete();
+        if (!$cartItem) {
+            return response()->json(['success' => false, 'message' => 'Item not found in your cart.'], 404);
+        }
 
-    //     // 3. Fetch the updated cart state layout summary
-    //     $cart = Cart::where('created_by', $user->id)->first();
-    //     if ($cart) {
-    //         $cart->load(['items.product', 'items.branch', 'items.productOption']);
-    //     }
+        // Update with the requested quantity
+        $cartItem->update([
+            'quantity' => $request->input('quantity')
+        ]);
 
-    //     return response()->json([
-    //         'success' => true,
-    //         'message' => 'Item removed from cart successfully.',
-    //         'data' => $cart
-    //     ], 200);
-    // }
+        // Reload root cart with all necessary relationships so images show perfectly on frontend refresh
+        $cart = Cart::where('created_by', $user->id)->first();
+        if ($cart) {
+            $cart->load([
+                'items.product.images', // Crucial for parsing item.product.images fallback helper
+                'items.product.options',
+                'items.branch'
+            ]);
+        }
 
-    // public function removeItem($itemId): JsonResponse
-    // {
-    //     $user = auth()->user();
-    //     $cartItem = CartItem::where('id', $itemId)->where('created_by', $user->id)->firstOrFail();
-        
-    //     $cartItem->options()->detach();
-    //     $cartItem->delete();
-
-    //     $cart = Cart::where('created_by', $user->id)->with(['items.product', 'items.options', 'items.branch'])->first();
-
-    //     return response()->json([
-    //         'success' => true,
-    //         'message' => 'Item removed from cart.',
-    //         'data' => $cart
-    //     ], 200);
-    // }
+        return response()->json([
+            'success' => true,
+            'message' => 'Cart quantity updated successfully.',
+            'data' => $cart
+        ], 200);
+    }
 }
