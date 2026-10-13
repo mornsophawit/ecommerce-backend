@@ -55,7 +55,9 @@ class StoreController extends Controller
                 'name_kh' => $store->name_kh,
                 'description' => $store->description,
                 'description_kh' => $store->description_kh,
-                'image_url' => $store->image_url,
+                // 'image_url' => $store->image_url,
+                'profile_url' => $store->profile_url,
+                'cover_url' => $store->cover_url,
                 // Appends the counted relationship column metric natively compiled by Laravel
                 'branches_count' => (int) $store->branches_count,
                 // Pulls down the branches model structure only if explicitly requested
