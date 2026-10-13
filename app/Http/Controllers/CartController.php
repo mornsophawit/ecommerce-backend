@@ -25,7 +25,7 @@ class CartController extends Controller
         );
 
         // 2. Fixed: Safely load properties using your synchronized model method definitions
-        $relations = ['items.product', 'items.branch'];
+        $relations = ['items.product.images', 'items.branch'];
         
         // Checks dynamically if your model contains the clean productOption method binding
         if (method_exists(new \App\Models\CartItem(), 'productOption')) {
@@ -39,18 +39,6 @@ class CartController extends Controller
             'message' => 'Shopping cart contents retrieved successfully.',
             'data' => $cart
         ], 200);
-        // $user = auth()->user();
-        // $cart = Cart::with(['items.product', 'items.options', 'items.branch'])
-        //     ->firstOrCreate(
-        //         ['created_by' => $user->id],
-        //         ['updated_by' => $user->id, 'expires_at' => now()->addDays(7)]
-        //     );
-
-        // return response()->json([
-        //     'success' => true,
-        //     'message' => 'Cart details retrieved.',
-        //     'data' => $cart
-        // ], 200);
     }
 
     public function addItem(Request $request): JsonResponse
@@ -184,7 +172,7 @@ class CartController extends Controller
             });
 
             // Load relations after commit
-            $relations = ['items.product', 'items.branch'];
+            $relations = ['items.product.images', 'items.branch'];
             if (method_exists(new CartItem(), 'productOption')) {
                 $relations[] = 'items.productOption';
             }
