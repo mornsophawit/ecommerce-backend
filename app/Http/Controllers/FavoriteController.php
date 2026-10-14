@@ -24,7 +24,7 @@ class FavoriteController extends Controller
         }
 
         $perPage = $request->input('per_page', 10);
-        $favorites = $query->with('product')->paginate($perPage);
+        $favorites = $query->with('product.images')->paginate($perPage);
 
         return response()->json([
             'success' => true,
@@ -55,6 +55,10 @@ class FavoriteController extends Controller
             'user_id' => $user->id,
             'product_id' => $request->product_id
         ]);
+
+         // OPTIONAL FIX: If your frontend needs the image immediately after adding to favorites, 
+        // load the nested images here too before passing it to the resource
+        $favorite->load('product.images');
 
         return response()->json([
             'success' => true,

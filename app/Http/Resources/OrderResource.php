@@ -41,6 +41,15 @@ class OrderResource extends JsonResource
                 'product_id' => $detail->product_id,
                 'product_name' => $detail->product ? $detail->product->name : null,
                 'product_name_kh' => $detail->product ? $detail->product->name_kh : null,
+
+                'product' => [
+                    'name' => $detail->product ? $detail->product->name : null,
+                    'images' => $detail->product && $detail->product->relationLoaded('images') ? $detail->product->images->map(fn($img) => [
+                        'image_url' => $img->image_url,
+                        'is_primary' => $img->is_primary
+                    ]) : []
+                ],
+                
                 'product_option_id' => $detail->product_option_id,
                 'option_name' => $detail->productOption ? $detail->productOption->option_name : null,
                 'option_name_kh' => $detail->productOption ? $detail->productOption->option_name_kh : null,

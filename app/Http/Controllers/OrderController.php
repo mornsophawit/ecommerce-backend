@@ -51,7 +51,7 @@ class OrderController extends Controller
 
         $query->orderBy('created_at', 'desc');
         $perPage = $request->input('per_page', 10);
-        $orders = $query->with(['details.product', 'details.productOption', 'address', 'branch', 'status', 'creator'])->paginate($perPage);
+        $orders = $query->with(['details.product.images', 'details.productOption', 'address', 'branch', 'status', 'creator'])->paginate($perPage);
 
         return response()->json([
             'success' => true,
@@ -165,7 +165,7 @@ class OrderController extends Controller
                     $cart->items()->delete();
                 }
 
-                $order->load(['details.product', 'details.productOption', 'address', 'branch', 'status', 'creator']);
+                $order->load(['details.product.images', 'details.productOption', 'address', 'branch', 'status', 'creator']);
                 
                 return response()->json([
                     'success' => true,
@@ -232,7 +232,7 @@ class OrderController extends Controller
             }
         }
 
-        $order->load(['details.product', 'details.productOption', 'address', 'branch', 'status', 'creator']);
+        $order->load(['details.product.images', 'details.productOption', 'address', 'branch', 'status', 'creator']);
         return response()->json([
             'success' => true,
             'message' => 'Order metrics retrieved successfully.',
