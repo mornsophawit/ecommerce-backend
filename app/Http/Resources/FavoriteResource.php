@@ -21,6 +21,20 @@ class FavoriteResource extends JsonResource
             'product_name' => $this->product ? $this->product->name : null,
             'product_name_kh' => $this->product ? $this->product->name_kh : null,
             'product_price' => $this->product ? $this->product->price : null,
+
+            'product' => $this->product ? [
+                'id' => $this->product->id,
+                'name' => $this->product->name,
+                'name_kh' => $this->product->name_kh,
+                'price' => $this->product->price,
+                'images' => $this->whenLoaded('product', function() {
+                    return $this->product->relationLoaded('images') ? $this->product->images->map(fn($img) => [
+                        'image_url' => $img->image_url,
+                        'is_primary' => $img->is_primary
+                    ]) : [];
+                }, [])
+            ] : null,
+            
             'created_at' => $this->created_at,
         ];
     }
