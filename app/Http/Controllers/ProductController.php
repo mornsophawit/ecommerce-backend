@@ -153,13 +153,13 @@ class ProductController extends Controller
         $validator = Validator::make($request->all(), [
             'product_type_id' => 'required|exists:product_types,id',
             'name' => 'required|string|max:255',
-            'name_kh' => 'required|string|max:255',
+            'name_kh' => 'nullable|string|max:255',
             'description' => 'nullable|string',
             'description_kh' => 'nullable|string',
             'price' => 'required|numeric|min:0',
-            'unit_value' => 'required|numeric|min:0',
-            'unit_name' => 'required|string|max:20',
-            'unit_name_kh' => 'required|string|max:255',
+            'unit_value' => 'nullable|numeric|min:0',
+            'unit_name' => 'nullable|string|max:20',
+            'unit_name_kh' => 'nullable|string|max:255',
             
             // Replaced 'stock' with branch data mapping array
             'branches' => 'nullable|array',
